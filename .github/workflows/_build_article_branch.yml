@@ -52,6 +52,7 @@ jobs:
           name: ${{ steps.build.outputs.article_name }}.pdf
           path: ${{ inputs.branch_name }}/${{ steps.build.outputs.article_name }}.pdf
           retention-days: 3 # 3日くらいあったらみんなダウンロードして確認しているはず
+          compression-level: 0
         id: upload-artifact
 
       - name: setup the GitHub CLI
