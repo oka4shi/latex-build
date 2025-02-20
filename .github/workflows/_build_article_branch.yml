@@ -72,7 +72,7 @@ jobs:
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          message="[${{ steps.build.outputs.article_name }}.pdf](${{ steps.upload-artifact.outputs.artifact-url }}/${{steps.build.outputs.article_name}}.pdf)"
+          message="[${{ steps.build.outputs.article_name }}.pdf](${{ steps.upload-artifact.outputs.artifact-url }})"
           set +e
           echo $message | gh pr comment "${{inputs.pr_url }}" -F "-" --edit-last
           if [ $? -ne 0 ]; then
