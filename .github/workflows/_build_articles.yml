@@ -2,6 +2,13 @@ name: Master Branch CI
 
 on:
   workflow_call:
+    inputs:
+      repo_name:
+        required: true
+        type: string
+      branch_name:
+        required: true
+        type: string
 
 jobs:
   build-article:
