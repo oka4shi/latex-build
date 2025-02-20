@@ -43,6 +43,7 @@ jobs:
           echo "article_name=$ARTICLE_NAME" >> $GITHUB_OUTPUT
           cd ${{ inputs.branch_name }}
           WORD_FONT=sourcehan-jp make
+          mv main.pdf "${{ steps.build.outputs.article_name }}.pdf"
         id: build
 
       - name: upload artifact to github
