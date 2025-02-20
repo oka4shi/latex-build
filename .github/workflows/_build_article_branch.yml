@@ -44,6 +44,7 @@ jobs:
           cd ${{ inputs.branch_name }}
           WORD_FONT=sourcehan-jp make
           mv main.pdf "$ARTICLE_NAME.pdf"
+          ls
         id: build
 
       - name: upload artifact to github
@@ -67,15 +68,16 @@ jobs:
             && apt install gh -y
 
       - name: Post a comment
+        if: ${{ steps.upload-artifact.outputs.artifact-url }}
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           message="[${{ steps.build.outputs.article_name }}.pdf](${{ steps.upload-artifact.outputs.artifact-url }})"
           set +e
-          echo -e $message | gh pr comment "${{inputs.pr_url }}" -F "-" --edit-last
+          echo $message | gh pr comment "${{inputs.pr_url }}" -F "-" --edit-last
           if [ $? -ne 0 ]; then
             # コメントが存在しないなどにより失敗した場合は新しく投稿する
-            echo -e $message | gh pr comment "${{inputs.pr_url }}" -F "-"
+            echo $message | gh pr comment "${{inputs.pr_url }}" -F "-"
           fi
           set -e
 
