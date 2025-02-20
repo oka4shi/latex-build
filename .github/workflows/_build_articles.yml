@@ -1,0 +1,37 @@
+name: Master Branch CI
+
+on:
+  workflow_call:
+
+jobs:
+  build-article:
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/word-coins/latex-build:latest
+    env:
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      # 事前にarticlesフォルダ内のmarkdownファイルに対してpandocを実行する
+      - name: convert markdown to latex
+        shell: bash
+        run: |
+          for filepath in $PWD/articles/*; do
+            cd $filepath
+            if [ -f ./main.md ]; then
+              echo $filepath
+              make pandoc
+            fi
+          done
+
+      - name: build master branch
+        run: |
+          WORD_FONT=sourcehan-jp make
+
+      - name: upload artifact to github
+        uses: actions/upload-artifact@v4
+        with:
+          name: main.pdf
+          path: main.pdf
+          retention-days: 3 # 3日くらいあったらみんなダウンロードして確認しているはず

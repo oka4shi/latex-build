@@ -1,0 +1,66 @@
+name: Articles Build CI
+
+on:
+  workflow_call:
+    inputs:
+      repo_name:
+        required: true
+        type: string
+      branch_name:
+        required: true
+        type: string
+      pr_url:
+        required: true
+        type: string
+
+jobs:
+  build-article:
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/word-coins/latex-build:latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: check exist main.md file
+        shell: bash
+        run: |
+          cd ${{ inputs.branch_name }}
+          if [ -f ./main.md ]; then
+            echo "exist=true" >> $GITHUB_OUTPUT
+          fi
+        id: main_md
+
+      - name: convert markdown to latex
+        if: steps.main_md.outputs.exist == 'true'
+        run: |
+          cd ${{ inputs.branch_name }}
+          make pandoc
+
+      - name: build articles branch
+        run: |
+          ARTICLE_NAME=$(echo '${{ inputs.branch_name }}' | awk -F '/' '{print $2}')
+          echo "article_name=$ARTICLE_NAME" >> $GITHUB_OUTPUT
+          cd ${{ inputs.branch_name }}
+          WORD_FONT=sourcehan-jp make
+        id: build
+
+      - name: upload artifact to github
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.build.outputs.article_name }}.pdf
+          path: ${{ inputs.branch_name }}/{{ $steps.build.outputs.article_name }}.pdf
+          retention-days: 3 # 3日くらいあったらみんなダウンロードして確認しているはず
+        id: upload-artifact
+
+      - name: Post a comment
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          message="[${{ steps.build.outputs.article_name }}.pdf](${{ steps.upload-artifact.outputs.artifact-url }})"
+          echo -e $message | gh pr comment "${{inputs.pr_url }}" -F "-" --edit-last
+          if [ $? -ne 0 ]; then
+            # コメントが存在しないなどにより失敗した場合は新しく投稿する
+            echo -e $message | gh pr comment "${{inputs.pr_url }}" -F "-"
+          fi
+
